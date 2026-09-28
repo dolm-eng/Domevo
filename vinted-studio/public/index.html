@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#09b1ba" />
+  <title>Vinted Studio</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <h1>Vinted Studio</h1>
+    <p>Une photo de ton vêtement → un shooting complet prêt pour ton annonce.</p>
+  </header>
+
+  <main>
+    <section class="card">
+      <h2>1. Ta photo</h2>
+      <label class="drop" id="drop">
+        <input type="file" id="file" accept="image/*" capture="environment" hidden />
+        <img id="preview" alt="" hidden />
+        <span id="dropText">📷 Prendre une photo ou choisir une image</span>
+      </label>
+      <p class="hint">Astuce : vêtement bien étalé, entièrement visible, à la lumière du jour.</p>
+    </section>
+
+    <section class="card">
+      <h2>2. Décor</h2>
+      <div class="chips" id="decors"></div>
+    </section>
+
+    <section class="card">
+      <h2>3. Photos à créer</h2>
+      <div class="chips" id="views"></div>
+      <label class="note">
+        Précisions (facultatif)
+        <input type="text" id="note" maxlength="300" placeholder="ex : dos uni, sweat oversize, taille M" />
+      </label>
+    </section>
+
+    <button id="go" class="primary" disabled>✨ Générer les photos</button>
+    <p id="status" class="status" role="status"></p>
+
+    <section id="results" class="card" hidden>
+      <div class="results-head">
+        <h2>Tes photos</h2>
+        <button id="shareAll" class="secondary">Partager / tout télécharger</button>
+      </div>
+      <div class="grid" id="grid"></div>
+      <p class="warning">⚠️ Les vues autres que la face (surtout le dos) sont imaginées par l'IA. Vérifie
+        qu'elles correspondent bien à l'article réel avant de les publier, et garde ta vraie photo dans l'annonce.</p>
+    </section>
+  </main>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+{
+  "name": "vinted-studio",
+  "version": "1.0.0",
+  "description": "Génère un shooting photo complet (face, dos, détails, porté…) pour Vinted à partir d'une seule photo de vêtement.",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "start": "node --env-file-if-exists=.env server.js",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
