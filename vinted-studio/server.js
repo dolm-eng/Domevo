@@ -39,17 +39,18 @@ async function readJsonBody(req) {
 export function parseDataUrl(dataUrl) {
   const m = /^data:(image\/(?:jpeg|png|webp));base64,([A-Za-z0-9+/=]+)$/.exec(String(dataUrl || ''));
   if (!m) throw Object.assign(new Error('Image invalide (JPEG, PNG ou WebP attendu)'), { status: 400 });
-  return { mimeType: m[1], imageBase64: m[2] };
+  return { mimeType: m[1], data: m[2] };
 }
 
 async function handleGenerate(req, res) {
   const body = await readJsonBody(req);
-  const { mimeType, imageBase64 } = parseDataUrl(body.image);
+  const images = [parseDataUrl(body.image)];
+  if (body.backImage) images.push(parseDataUrl(body.backImage));
   if (!VIEWS[body.view] || !DECORS[body.decor]) {
     return sendJson(res, 400, { error: 'Vue ou décor inconnu' });
   }
-  const prompt = buildPrompt(body.view, body.decor, body.note);
-  const result = await getProvider()({ imageBase64, mimeType, prompt });
+  const prompt = buildPrompt(body.view, body.decor, body.note, { hasBack: images.length > 1 });
+  const result = await getProvider()({ images, prompt });
   sendJson(res, 200, { view: body.view, image: `data:${result.mimeType};base64,${result.data}` });
 }
 

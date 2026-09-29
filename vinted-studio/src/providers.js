@@ -1,18 +1,19 @@
 // Appels aux modèles de génération / retouche d'image.
-// Chaque fournisseur reçoit l'image de référence (base64) + un prompt
-// et renvoie { mimeType, data } (base64).
+// Chaque fournisseur reçoit les images de référence (face, puis dos facultatif)
+// sous forme [{ mimeType, data }] (base64) + un prompt, et renvoie { mimeType, data }.
 
-async function geminiGenerate({ imageBase64, mimeType, prompt }) {
+async function geminiGenerate({ images, prompt }) {
   const key = process.env.GEMINI_API_KEY;
   if (!key) throw new Error('GEMINI_API_KEY manquante dans .env');
   const model = process.env.GEMINI_MODEL || 'gemini-2.5-flash-image';
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
 
+  const imageParts = images.map((img) => ({ inline_data: { mime_type: img.mimeType, data: img.data } }));
   const res = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
     body: JSON.stringify({
-      contents: [{ parts: [{ inline_data: { mime_type: mimeType, data: imageBase64 } }, { text: prompt }] }],
+      contents: [{ parts: [...imageParts, { text: prompt }] }],
       generationConfig: { responseModalities: ['IMAGE'], imageConfig: { aspectRatio: '3:4' } },
     }),
   });
@@ -29,14 +30,17 @@ async function geminiGenerate({ imageBase64, mimeType, prompt }) {
   return { mimeType: data.mimeType || data.mime_type || 'image/png', data: data.data };
 }
 
-async function openaiGenerate({ imageBase64, mimeType, prompt }) {
+async function openaiGenerate({ images, prompt }) {
   const key = process.env.OPENAI_API_KEY;
   if (!key) throw new Error('OPENAI_API_KEY manquante dans .env');
   const form = new FormData();
   form.append('model', process.env.OPENAI_MODEL || 'gpt-image-1');
   form.append('prompt', prompt);
   form.append('size', '1024x1536');
-  form.append('image', new Blob([Buffer.from(imageBase64, 'base64')], { type: mimeType }), 'reference.jpg');
+  images.forEach((img, i) => {
+    const blob = new Blob([Buffer.from(img.data, 'base64')], { type: img.mimeType });
+    form.append('image[]', blob, i === 0 ? 'front.jpg' : 'back.jpg');
+  });
 
   const res = await fetch('https://api.openai.com/v1/images/edits', {
     method: 'POST',
@@ -50,10 +54,10 @@ async function openaiGenerate({ imageBase64, mimeType, prompt }) {
   return { mimeType: 'image/png', data: b64 };
 }
 
-// Fournisseur de test : renvoie la photo d'origine après un court délai.
-async function mockGenerate({ imageBase64, mimeType }) {
+// Fournisseur de test : renvoie la photo de face d'origine après un court délai.
+async function mockGenerate({ images }) {
   await new Promise((r) => setTimeout(r, 400));
-  return { mimeType, data: imageBase64 };
+  return { mimeType: images[0].mimeType, data: images[0].data };
 }
 
 const PROVIDERS = { gemini: geminiGenerate, openai: openaiGenerate, mock: mockGenerate };

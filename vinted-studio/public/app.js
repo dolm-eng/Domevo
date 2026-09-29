@@ -1,5 +1,5 @@
 const $ = (id) => document.getElementById(id);
-const state = { image: null, decor: 'studio', views: new Set(), results: new Map(), config: null };
+const state = { images: { front: null, back: null }, decor: 'studio', views: new Set(), results: new Map(), config: null };
 
 const MAX_SIDE = 1536;
 
@@ -52,22 +52,56 @@ function renderOptions() {
 }
 
 function updateButton() {
-  $('go').disabled = !state.image || state.views.size === 0;
+  $('go').disabled = !state.images.front || state.views.size === 0;
 }
 
-async function setFile(file) {
+const DROP_LABELS = { front: '📷 Photo de face', back: '📷 Photo du dos' };
+
+function renderSlot(slot) {
+  const drop = $(`drop-${slot}`);
+  const img = drop.querySelector('img');
+  const text = drop.querySelector('.drop-text');
+  const data = state.images[slot];
+  img.hidden = !data;
+  text.hidden = !!data;
+  if (data) img.src = data;
+  else img.removeAttribute('src');
+  if (slot === 'back') $('removeBack').hidden = !data;
+}
+
+async function setFile(slot, file) {
   if (!file || !file.type.startsWith('image/')) return;
-  $('dropText').textContent = 'Préparation…';
+  const text = $(`drop-${slot}`).querySelector('.drop-text');
+  text.hidden = false;
+  text.textContent = 'Préparation…';
   try {
-    state.image = await resizeImage(file);
-    $('preview').src = state.image;
-    $('preview').hidden = false;
-    $('dropText').hidden = true;
+    state.images[slot] = await resizeImage(file);
+    text.textContent = DROP_LABELS[slot];
   } catch {
-    $('dropText').textContent = "Impossible de lire cette image. Essaie en JPEG ou PNG.";
-    state.image = null;
+    state.images[slot] = null;
+    text.textContent = 'Impossible de lire cette image. Essaie en JPEG ou PNG.';
   }
+  renderSlot(slot);
   updateButton();
+}
+
+function setupDrop(slot) {
+  const drop = $(`drop-${slot}`);
+  const input = drop.querySelector('input');
+  input.addEventListener('change', () => {
+    setFile(slot, input.files[0]);
+    input.value = ''; // permet de reprendre la même photo
+  });
+  drop.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    drop.classList.add('dragover');
+  });
+  drop.addEventListener('dragleave', () => drop.classList.remove('dragover'));
+  drop.addEventListener('drop', (e) => {
+    e.preventDefault();
+    drop.classList.remove('dragover');
+    setFile(slot, e.dataTransfer.files[0]);
+  });
 }
 
 function makeTile(viewId) {
@@ -107,17 +141,17 @@ function showError(tile, viewId, message) {
     retry.remove();
     frame.className = 'frame';
     frame.innerHTML = '<div class="spinner"></div>';
-    generateOne(tile, viewId, { image: state.lastImage, decor: state.lastDecor, note: state.lastNote });
+    generateOne(tile, viewId, state.lastParams);
   });
   tile.querySelector('footer').append(retry);
 }
 
-async function generateOne(tile, viewId, { image, decor, note }) {
+async function generateOne(tile, viewId, { image, backImage, decor, note }) {
   try {
     const res = await fetch('/api/generate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ image, view: viewId, decor, note }),
+      body: JSON.stringify({ image, backImage, view: viewId, decor, note }),
     });
     const json = await res.json().catch(() => ({ error: `Erreur serveur (${res.status})` }));
     if (!res.ok) throw new Error(json.error || `Erreur ${res.status}`);
@@ -131,9 +165,13 @@ async function generateOne(tile, viewId, { image, decor, note }) {
 async function generateAll() {
   const views = Object.keys(state.config.views).filter((id) => state.views.has(id));
   state.results.clear();
-  state.lastImage = state.image;
-  state.lastDecor = state.decor;
-  state.lastNote = $('note').value;
+  const params = {
+    image: state.images.front,
+    backImage: state.images.back || undefined,
+    decor: state.decor,
+    note: $('note').value,
+  };
+  state.lastParams = params;
 
   const grid = $('grid');
   grid.innerHTML = '';
@@ -149,7 +187,6 @@ async function generateAll() {
 
   // File d'attente avec nombre limité de requêtes simultanées.
   const queue = [...views];
-  const params = { image: state.lastImage, decor: state.lastDecor, note: state.lastNote };
   const worker = async () => {
     while (queue.length) {
       const id = queue.shift();
@@ -199,17 +236,11 @@ async function init() {
   state.config.defaultViews.forEach((v) => state.views.add(v));
   renderOptions();
 
-  $('file').addEventListener('change', (e) => setFile(e.target.files[0]));
-  const drop = $('drop');
-  drop.addEventListener('dragover', (e) => {
-    e.preventDefault();
-    drop.classList.add('dragover');
-  });
-  drop.addEventListener('dragleave', () => drop.classList.remove('dragover'));
-  drop.addEventListener('drop', (e) => {
-    e.preventDefault();
-    drop.classList.remove('dragover');
-    setFile(e.dataTransfer.files[0]);
+  setupDrop('front');
+  setupDrop('back');
+  $('removeBack').addEventListener('click', () => {
+    state.images.back = null;
+    renderSlot('back');
   });
   $('go').addEventListener('click', generateAll);
   $('shareAll').addEventListener('click', shareAll);

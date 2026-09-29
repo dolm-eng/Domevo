@@ -1,11 +1,14 @@
 # Vinted Studio 📸
 
-Prends **une seule photo** de ton vêtement et l'application crée un shooting complet, prêt pour ton annonce Vinted :
+Prends **une seule photo** de ton vêtement (de face) et l'application crée un shooting complet, prêt pour ton annonce Vinted.
+Tu peux aussi ajouter une **photo du dos (facultative)** : l'IA s'en sert alors pour reproduire le vrai dos au lieu de l'imaginer.
+
+Vues disponibles :
 
 | Vue | Description |
 | --- | --- |
 | Face | vêtement de face, bien centré |
-| Dos | le dos, déduit de la photo de face |
+| Dos | le dos : fidèle à ta photo du dos si tu en donnes une, sinon déduit de la face |
 | Trois-quarts | vue à 45° pour montrer le volume |
 | Porté | porté par un mannequin (visage non visible) |
 | Sur cintre | suspendu sur un cintre en bois |
@@ -51,13 +54,13 @@ Chaque vue générée correspond à un appel à l'API, donc 6 photos = 6 appels.
 
 - Vêtement **entièrement visible**, bien étalé, sans plis marqués.
 - Lumière du jour et pas de flash.
-- Si le dos a un motif ou un imprimé, précise-le dans le champ **« Précisions »**, par exemple « dos uni » ou « grand logo dans le dos ».
-  Sinon, l'IA ne peut pas le deviner.
+- Si le dos a un motif, un imprimé ou un défaut, **ajoute la photo du dos**.
+  À défaut, décris-le dans le champ **« Précisions »**, par exemple « grand logo dans le dos ». Si le dos est uni, écris « dos uni ».
 
 ## ⚠️ Honnêteté vis-à-vis des acheteurs
 
-Les vues autres que la face sont **créées par l'IA** : elles peuvent ne pas refléter exactement l'article réel.
-C'est surtout vrai pour le dos, que l'IA n'a jamais vu.
+Toutes les vues sont **recréées par l'IA** : elles peuvent ne pas refléter exactement l'article réel.
+C'est surtout vrai pour le dos quand tu n'as pas fourni de photo du dos.
 Vinted demande que les photos montrent l'article réellement vendu. Vérifie donc chaque image, écarte celles qui ne correspondent pas,
 garde ta vraie photo dans l'annonce, et photographie toi-même le dos et les défauts éventuels si tu le peux.
 

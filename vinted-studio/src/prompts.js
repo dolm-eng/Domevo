@@ -13,6 +13,9 @@ export const VIEWS = {
     prompt:
       'Show the garment from the BACK, fully visible and centered. Infer the back side logically from the front ' +
       '(same fabric, color, cut, seams and hem). Do not invent prints, logos or text on the back unless clearly implied.',
+    promptWithBack:
+      'Show the garment from the BACK, fully visible and centered. The back must match the SECOND reference photo exactly ' +
+      '(same print, logo, text, seams and any visible wear), only the background, lighting and presentation change.',
   },
   trois_quarts: {
     label: 'Trois-quarts',
@@ -79,12 +82,19 @@ const FIDELITY_RULES =
   'Remove the original messy background, people and clutter. Photorealistic, sharp focus, high resolution, ' +
   'vertical 3:4 framing, no text, no watermark, no borders.';
 
-export function buildPrompt(viewId, decorId, note = '') {
+const TWO_PHOTOS =
+  'You are given TWO reference photos of the same item: the first shows the FRONT, the second shows the BACK. ' +
+  'Use both to understand the item; never mix up front and back details.';
+
+export function buildPrompt(viewId, decorId, note = '', { hasBack = false } = {}) {
   const view = VIEWS[viewId];
   const decor = DECORS[decorId];
   if (!view) throw new Error(`Vue inconnue : ${viewId}`);
   if (!decor) throw new Error(`Décor inconnu : ${decorId}`);
-  const parts = [FIDELITY_RULES, `Shot: ${view.prompt}`, `Setting: ${decor.prompt}`];
+  const shot = hasBack && view.promptWithBack ? view.promptWithBack : view.prompt;
+  const parts = [FIDELITY_RULES];
+  if (hasBack) parts.push(TWO_PHOTOS);
+  parts.push(`Shot: ${shot}`, `Setting: ${decor.prompt}`);
   const cleanNote = String(note || '').trim().slice(0, 300);
   if (cleanNote) parts.push(`Extra information from the seller about the item: ${cleanNote}`);
   return parts.join('\n\n');

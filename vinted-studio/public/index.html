@@ -15,13 +15,28 @@
 
   <main>
     <section class="card">
-      <h2>1. Ta photo</h2>
-      <label class="drop" id="drop">
-        <input type="file" id="file" accept="image/*" capture="environment" hidden />
-        <img id="preview" alt="" hidden />
-        <span id="dropText">📷 Prendre une photo ou choisir une image</span>
-      </label>
-      <p class="hint">Astuce : vêtement bien étalé, entièrement visible, à la lumière du jour.</p>
+      <h2>1. Tes photos</h2>
+      <div class="photos">
+        <div class="slot">
+          <span class="slot-title">Face <em>(obligatoire)</em></span>
+          <label class="drop" id="drop-front">
+            <input type="file" accept="image/*" capture="environment" hidden />
+            <img alt="Photo de face" hidden />
+            <span class="drop-text">📷 Photo de face</span>
+          </label>
+        </div>
+        <div class="slot">
+          <span class="slot-title">Dos <em>(facultatif)</em></span>
+          <label class="drop" id="drop-back">
+            <input type="file" accept="image/*" capture="environment" hidden />
+            <img alt="Photo du dos" hidden />
+            <span class="drop-text">📷 Photo du dos</span>
+          </label>
+          <button type="button" class="link" id="removeBack" hidden>Retirer la photo du dos</button>
+        </div>
+      </div>
+      <p class="hint">Astuce : vêtement bien étalé, entièrement visible, à la lumière du jour.
+        Sans photo du dos, l'IA l'imagine : ajoute-la si le dos a un logo, un imprimé ou un défaut.</p>
     </section>
 
     <section class="card">
@@ -47,7 +62,7 @@
         <button id="shareAll" class="secondary">Partager / tout télécharger</button>
       </div>
       <div class="grid" id="grid"></div>
-      <p class="warning">⚠️ Les vues autres que la face (surtout le dos) sont imaginées par l'IA. Vérifie
+      <p class="warning">⚠️ Ces photos sont recréées par l'IA (et le dos est imaginé si tu n'as pas donné de photo du dos). Vérifie
         qu'elles correspondent bien à l'article réel avant de les publier, et garde ta vraie photo dans l'annonce.</p>
     </section>
   </main>

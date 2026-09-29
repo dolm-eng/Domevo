@@ -29,6 +29,17 @@ test('buildPrompt combine règles, vue, décor et note', () => {
   assert.throws(() => buildPrompt('face', 'nope'));
 });
 
+test('avec une photo du dos, le prompt la décrit et la vue dos la suit', () => {
+  const sans = buildPrompt('dos', 'studio');
+  const avec = buildPrompt('dos', 'studio', '', { hasBack: true });
+  assert.doesNotMatch(sans, /TWO reference photos/);
+  assert.match(avec, /TWO reference photos/);
+  assert.match(avec, /SECOND reference photo exactly/);
+  assert.doesNotMatch(avec, /Infer the back side/);
+  // les autres vues reçoivent l'info des deux photos mais gardent leur cadrage
+  assert.match(buildPrompt('face', 'studio', '', { hasBack: true }), /TWO reference photos[\s\S]*FRONT, fully visible/);
+});
+
 test('parseDataUrl refuse les formats non image', () => {
   assert.equal(parseDataUrl(TINY_PNG).mimeType, 'image/png');
   assert.throws(() => parseDataUrl('data:text/html;base64,AAAA'));
@@ -61,6 +72,20 @@ test('POST /api/generate valide les entrées', async () => {
   assert.equal(bad.status, 400);
   const badImg = await fetch(`${base}/api/generate`, { method: 'POST', body: JSON.stringify({ image: 'x', view: 'face', decor: 'studio' }) });
   assert.equal(badImg.status, 400);
+  const badBack = await fetch(`${base}/api/generate`, {
+    method: 'POST',
+    body: JSON.stringify({ image: TINY_PNG, backImage: 'data:text/html;base64,AAAA', view: 'dos', decor: 'studio' }),
+  });
+  assert.equal(badBack.status, 400);
+});
+
+test('POST /api/generate accepte une photo du dos facultative', async () => {
+  const res = await fetch(`${base}/api/generate`, {
+    method: 'POST',
+    body: JSON.stringify({ image: TINY_PNG, backImage: TINY_PNG, view: 'dos', decor: 'bois' }),
+  });
+  assert.equal(res.status, 200);
+  assert.equal((await res.json()).view, 'dos');
 });
 
 test('les fichiers statiques sont servis sans sortir de public/', async () => {
